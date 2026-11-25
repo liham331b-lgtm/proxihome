@@ -1,25 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
     const SOUND_STORAGE_KEY = 'proxihome_sound_enabled';
 
-    // ==================== 1. NAVIGATION MOBILE ====================
-    const navToggle = document.getElementById('navToggle');
+    // 1. Menu mobile (#mobileMenuBtn)
+    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const navLinks = document.getElementById('navLinks');
 
     function setMobileMenu(open) {
         if (!navLinks) return;
         navLinks.classList.toggle('open', open);
-        if (navToggle) {
-            navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        navLinks.classList.toggle('active', open);
+        if (mobileMenuBtn) {
+            mobileMenuBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+            mobileMenuBtn.textContent = open ? '✕' : '☰';
         }
     }
 
-    if (navToggle && navLinks) {
-        navToggle.setAttribute('aria-expanded', 'false');
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
 
-        navToggle.addEventListener('click', (e) => {
+        mobileMenuBtn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            setMobileMenu(!navLinks.classList.contains('open'));
+            const isOpen = navLinks.classList.contains('open') || navLinks.classList.contains('active');
+            setMobileMenu(!isOpen);
         });
 
         navLinks.querySelectorAll('a').forEach(link => {
@@ -27,17 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         document.addEventListener('click', (e) => {
+            const isOpen = navLinks.classList.contains('open') || navLinks.classList.contains('active');
             if (
-                navLinks.classList.contains('open') &&
+                isOpen &&
                 !navLinks.contains(e.target) &&
-                !navToggle.contains(e.target)
+                !mobileMenuBtn.contains(e.target)
             ) {
                 setMobileMenu(false);
             }
         });
     }
 
-    // ==================== 2. GESTION DU SON (ACTIVER / DÉSACTIVER) ====================
+    // 2. Bouton son (#soundToggle)
+    const soundToggle = document.getElementById('soundToggle');
+
     function isSoundEnabled() {
         const saved = localStorage.getItem(SOUND_STORAGE_KEY);
         if (saved === null) return true;
@@ -55,22 +61,13 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        const toggles = document.querySelectorAll(
-            '#soundToggle, [data-sound-toggle], .sound-toggle, [aria-label*="son" i], [title*="son" i]'
-        );
-
-        toggles.forEach(btn => {
+        document.querySelectorAll('#soundToggle, [data-sound-toggle], .sound-toggle').forEach(btn => {
             btn.classList.toggle('muted', !enabled);
             btn.classList.toggle('is-muted', !enabled);
             btn.classList.toggle('active', enabled);
             btn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
-            btn.dataset.soundEnabled = enabled ? 'true' : 'false';
-
-            const labelTarget = btn.querySelector('.sound-label, span');
-            if (labelTarget) {
-                labelTarget.textContent = enabled ? 'Son activé' : 'Son désactivé';
-            } else if (btn.tagName === 'BUTTON' && btn.children.length === 0) {
-                btn.textContent = enabled ? 'Son : Activé' : 'Son : Désactivé';
+            if (btn.id === 'soundToggle' || btn.classList.contains('sound-toggle')) {
+                btn.textContent = enabled ? '🔊' : '🔇';
             }
         });
     }
@@ -98,7 +95,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     applySoundState(isSoundEnabled());
 
-    // ==================== 3. SÉLECTION DES CATÉGORIES ====================
+    if (soundToggle) {
+        soundToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const nextState = !isSoundEnabled();
+            applySoundState(nextState);
+            if (nextState) {
+                playClickSound();
+            }
+        });
+    }
+
+    // 3. Sélection des catégories
     const categoryInput = document.getElementById('selectedCategory')
         || document.getElementById('categoryInput')
         || document.querySelector('input[name="category"]');
@@ -107,11 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cleanVal = (value || '').trim();
         if (!cleanVal) return;
 
-        const allCategoryItems = document.querySelectorAll(
-            '[data-category], .category-card, .category-btn, .category-option'
-        );
-
-        allCategoryItems.forEach(item => {
+        document.querySelectorAll('[data-category], .category-card, .category-btn, .category-option').forEach(item => {
             const itemVal = (item.dataset.category || item.dataset.value || item.textContent || '').trim();
             const isMatch = triggerEl ? item === triggerEl : itemVal === cleanVal;
             item.classList.toggle('selected', isMatch);
@@ -140,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ==================== 4. RÉSERVATION, WASQUEHAL (OUI / NON) & RETOUR ACCUEIL ====================
+    // 4. Réservation & Wasquehal (Oui / Non)
     const bookingForm = document.getElementById('bookingForm');
     const stepPanels = Array.from(document.querySelectorAll('.step-panel'));
     const stepDots = Array.from(document.querySelectorAll('.step-dot'));
@@ -167,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeAnyModal() {
-        document.querySelectorAll('.modal.open, .modal.active, .modal.show, [data-modal].open').forEach(modal => {
+        document.querySelectorAll('.modal.open, .modal.active, .modal.show, .modal-overlay.open, .modal-overlay.active, .modal-overlay.show').forEach(modal => {
             modal.classList.remove('open', 'active', 'show');
             modal.style.display = 'none';
         });
@@ -219,34 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.addEventListener('click', (e) => {
-        // Bouton activer / désactiver le son
-        const soundBtn = e.target.closest(
-            '#soundToggle, [data-sound-toggle], .sound-toggle, [aria-label*="son" i], [title*="son" i]'
-        );
-        if (soundBtn) {
-            e.preventDefault();
-            e.stopPropagation();
-            const nextState = !isSoundEnabled();
-            applySoundState(nextState);
-            if (nextState) {
-                playClickSound();
-            }
-            return;
-        }
-
-        // Sélection d'une catégorie
-        const catItem = e.target.closest(
-            '[data-category], .category-card, .category-btn, .category-option'
-        );
+        const catItem = e.target.closest('[data-category], .category-card, .category-btn, .category-option');
         if (catItem) {
-            const val = catItem.dataset.category
-                || catItem.dataset.value
-                || (catItem.textContent || '').trim();
+            const val = catItem.dataset.category || catItem.dataset.value || (catItem.textContent || '').trim();
             selectCategory(val, catItem);
             return;
         }
 
-        // Bouton retour à l'accueil explicite
         const homeBtn = e.target.closest('[data-go-home], .btn-home, #backHomeBtn');
         if (homeBtn) {
             e.preventDefault();
@@ -255,27 +239,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Bouton OUI Wasquehal
-        const yesBtn = e.target.closest(
-            '[data-wasquehal="yes"], #btnYesWasquehal, #yesWasquehal, .btn-yes-wasquehal'
-        );
+        const yesBtn = e.target.closest('[data-wasquehal="yes"], #btnYesWasquehal, #yesWasquehal, .btn-yes-wasquehal');
         if (yesBtn) {
             e.preventDefault();
             handleWasquehalChoice(true);
             return;
         }
 
-        // Bouton NON Wasquehal
-        const noBtn = e.target.closest(
-            '[data-wasquehal="no"], #btnNoWasquehal, #noWasquehal, .btn-no-wasquehal'
-        );
+        const noBtn = e.target.closest('[data-wasquehal="no"], #btnNoWasquehal, #noWasquehal, .btn-no-wasquehal');
         if (noBtn) {
             e.preventDefault();
             handleWasquehalChoice(false);
             return;
         }
 
-        // Détection de secours sur le libellé Oui / Non dans le bloc Wasquehal
         const actionBtn = e.target.closest('button, [role="button"], .btn');
         if (actionBtn) {
             const txt = (actionBtn.textContent || '').trim().toLowerCase();
@@ -294,12 +271,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Clic générique sur élément avec .sound-click
         if (e.target.closest('.sound-click')) {
             playClickSound();
         }
 
-        // Bouton suivant
         const nextBtn = e.target.closest('.next-step');
         if (nextBtn) {
             e.preventDefault();
@@ -312,7 +287,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Bouton précédent
         const prevBtn = e.target.closest('.prev-step');
         if (prevBtn) {
             e.preventDefault();
