@@ -9,29 +9,9 @@
             <p>Suivez l'avancement et l'arrivée de notre équipe à Wasquehal en direct.</p>
         </div>
 
-        {% if not booking and not prefill_ref %}
-        <div class="booking-card" id="autoLoadingBox">
-            <p id="statusHint">Chargement de votre intervention en cours...</p>
-            <form method="GET" action="{{ url_for('main.tracking') }}" id="quickRefForm" class="tracking-form" style="display: none; margin-top: 1rem;">
-                <div class="form-group">
-                    <label for="trackRefInput">Numéro de réservation (si différent)</label>
-                    <input type="text" name="ref" id="trackRefInput" placeholder="Ex : PX-A8F92K">
-                </div>
-                <button type="submit" class="btn btn-primary btn-block sound-click">Afficher le suivi</button>
-            </form>
-        </div>
-        {% endif %}
-
-        {% if error %}
+        {% if error and not booking %}
         <div class="booking-card">
             <div class="error-banner">{{ error }}</div>
-            <form method="GET" action="{{ url_for('main.tracking') }}" class="tracking-form" style="margin-top: 1.25rem;">
-                <div class="form-group">
-                    <label for="retryRefInput">Numéro de réservation</label>
-                    <input type="text" name="ref" id="retryRefInput" value="{{ prefill_ref }}" placeholder="Ex : PX-A8F92K" required>
-                </div>
-                <button type="submit" class="btn btn-primary btn-block sound-click">Afficher le suivi</button>
-            </form>
         </div>
         {% endif %}
 
@@ -50,14 +30,14 @@
             </div>
 
             {% if booking.status == 0 %}
-                <div class="error-banner" style="margin-top: 1.5rem;">Cette intervention a été annulée. Contactez-nous pour plus d'informations.</div>
+                <div class="error-banner" style="margin-top: 1.5rem;">Cette intervention a été annulée.</div>
             {% else %}
             <div class="timeline">
                 <div class="timeline-item {{ 'completed' if booking.status >= 1 else '' }}">
                     <div class="timeline-dot">1</div>
                     <div class="timeline-content">
-                        <h4>DEMANDE PRISE EN COMPTE</h4>
-                        <p>Votre réservation est confirmée et enregistrée dans notre planning Wasquehal.</p>
+                        <h4>DEMANDE CONFIRMÉE</h4>
+                        <p>Votre réservation est confirmée à Wasquehal.</p>
                         <small>{{ booking.step1_at.strftime('%d/%m/%Y à %H:%M') if booking.step1_at else '' }}</small>
                     </div>
                 </div>
@@ -65,8 +45,8 @@
                 <div class="timeline-item {{ 'completed' if booking.status >= 2 else '' }}">
                     <div class="timeline-dot">2</div>
                     <div class="timeline-content">
-                        <h4>PRÉPARATION DE L'INTERVENTION</h4>
-                        <p>Notre équipe prépare le matériel de désherbage pour votre secteur.</p>
+                        <h4>PRÉPARATION DE L'ÉQUIPE</h4>
+                        <p>Le matériel de désherbage est prêt pour votre créneau.</p>
                         <small>{{ booking.step2_at.strftime('%d/%m/%Y à %H:%M') if booking.step2_at else 'En attente' }}</small>
                     </div>
                 </div>
@@ -74,8 +54,8 @@
                 <div class="timeline-item {{ 'completed' if booking.status >= 3 else '' }}">
                     <div class="timeline-dot">3</div>
                     <div class="timeline-content">
-                        <h4>ÉQUIPE EN DÉPLACEMENT / ARRIVÉE</h4>
-                        <p>Nos intervenants sont en route vers votre habitation à Wasquehal. Préparez 10 € en espèces.</p>
+                        <h4>ÉQUIPE EN ROUTE / ARRIVÉE</h4>
+                        <p>L'équipe arrive vers votre adresse à Wasquehal (10 € en espèces sur place).</p>
                         <small>{{ booking.step3_at.strftime('%d/%m/%Y à %H:%M') if booking.step3_at else 'En attente' }}</small>
                     </div>
                 </div>
@@ -84,16 +64,12 @@
                     <div class="timeline-dot">4</div>
                     <div class="timeline-content">
                         <h4>INTERVENTION TERMINÉE</h4>
-                        <p>Votre trottoir est propre et désherbé ! Merci pour votre confiance.</p>
+                        <p>Désherbage terminé sur votre trottoir.</p>
                         <small>{{ booking.step4_at.strftime('%d/%m/%Y à %H:%M') if booking.step4_at else 'En attente' }}</small>
                     </div>
                 </div>
             </div>
             {% endif %}
-
-            <div style="margin-top: 2rem; text-align: right;">
-                <a href="{{ url_for('main.tracking', reset='1') }}" class="btn btn-outline btn-sm">Consulter une autre commande</a>
-            </div>
         </div>
         {% endif %}
     </div>
@@ -105,30 +81,15 @@
     (function () {
         const STORAGE_KEY = 'proxihome_last_ref';
         const params = new URLSearchParams(window.location.search);
-
-        if (params.get('reset') === '1') {
-            localStorage.removeItem(STORAGE_KEY);
-            const hint = document.getElementById('statusHint');
-            const form = document.getElementById('quickRefForm');
-            if (hint) hint.textContent = 'Aucune commande mémorisée sur cet appareil.';
-            if (form) form.style.display = 'block';
-            return;
-        }
-
         const serverRef = "{{ booking.reference if booking else '' }}";
-        if (serverRef) {
-            localStorage.setItem(STORAGE_KEY, serverRef);
-            return;
-        }
 
-        const savedRef = localStorage.getItem(STORAGE_KEY);
-        if (savedRef && !params.get('ref')) {
-            window.location.replace(`/suivi?ref=${encodeURIComponent(savedRef)}`);
-        } else {
-            const hint = document.getElementById('statusHint');
-            const form = document.getElementById('quickRefForm');
-            if (hint) hint.textContent = 'Entrez votre numéro de réservation si vous avez commandé depuis un autre appareil :';
-            if (form) form.style.display = 'block';
+        if (serverRef && !params.get('ref')) {
+            const savedRef = localStorage.getItem(STORAGE_KEY);
+            if (savedRef && savedRef !== serverRef) {
+                window.location.replace(`/suivi?ref=${encodeURIComponent(savedRef)}`);
+            } else if (!savedRef) {
+                localStorage.setItem(STORAGE_KEY, serverRef);
+            }
         }
     })();
 </script>

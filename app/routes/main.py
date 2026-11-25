@@ -54,6 +54,10 @@ def tracking():
     if ref:
         booking = Booking.query.filter_by(reference=ref).first()
         if not booking:
-            error = "Aucune intervention trouvée pour ce numéro de réservation."
+            error = "Aucune intervention trouvée."
+    else:
+        booking = Booking.query.order_by(Booking.id.desc()).first()
+        if not booking:
+            error = "Aucune intervention enregistrée pour le moment."
 
     return render_template('tracking.html', booking=booking, error=error, prefill_ref=ref)
