@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="section-light">
+    <div class="container">
+        {% if page == 'informations' %}
+            <div class="section-header">
+                <h1>Informations sur ProxiHome</h1>
+                <p>Tout savoir sur notre fonctionnement local à Wasquehal.</p>
+            </div>
+            <div class="cards-grid">
+                <div class="card">
+                    <h3>Notre mission</h3>
+                    <p>ProxiHome aide les habitants de Wasquehal à garder un devant de porte impeccable et conforme aux arrêtés municipaux d'entretien des trottoirs, sans effort.</p>
+                </div>
+                <div class="card">
+                    <h3>Zone d'intervention</h3>
+                    <p>Nous intervenons uniquement sur la commune de <strong>Wasquehal (59290)</strong>. Cette proximité nous permet d'offrir un tarif ultra-compétitif sans frais kilométriques.</p>
+                </div>
+                <div class="card">
+                    <h3>Tarif unique & paiement</h3>
+                    <p><strong>10 € TTC tout compris.</strong> Le paiement s'effectue uniquement en espèces auprès de l'intervenant une fois sur place.</p>
+                </div>
+            </div>
+
+        {% elif page == 'services' %}
+            <div class="section-header">
+                <h1>Nos Services</h1>
+                <p>Une prestation ciblée, soignée et efficace.</p>
+            </div>
+            <div class="booking-card">
+                <h3>Désherbage complet du trottoir devant votre habitation — 10 € TTC</h3>
+                <ul class="service-list">
+                    <li>✅ Arrachage manuel et raclage des mauvaises herbes entre les dalles, pavés et bordures de trottoir.</li>
+                    <li>✅ Balayage et ramassage des déchets végétaux retirés.</li>
+                    <li>✅ Respect total de votre façade et de l'environnement (sans produits chimiques nocifs).</li>
+                    <li>❌ <strong>Exclusions :</strong> Pas de tonte de pelouse, pas de taille d'arbustes, pas d'entretien de jardins arrière.</li>
+                </ul>
+                <a href="{{ url_for('booking.booking_page') }}" class="btn btn-primary sound-click">Réserver mon créneau à 10 €</a>
+            </div>
+
+        {% elif page == 'contact' %}
+            <div class="section-header">
+                <h1>Contact & Questions Fréquentes</h1>
+                <p>Une question sur votre trottoir à Wasquehal ? Écrivez-nous à <strong>{{ contact_email }}</strong>.</p>
+            </div>
+            <div class="hero-grid">
+                <div class="booking-card">
+                    <h3>Envoyer un message</h3>
+                    <form method="POST" action="{{ url_for('main.contact') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <div class="form-group">
+                            <label>Votre nom *</label>
+                            <input type="text" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Votre e-mail *</label>
+                            <input type="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sujet *</label>
+                            <input type="text" name="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Message *</label>
+                            <textarea name="message" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary sound-click">Envoyer mon message</button>
+                    </form>
+                </div>
+                <div>
+                    <div class="card" style="margin-bottom: 1rem;">
+                        <h4>Dois-je être présent lors de l'intervention ?</h4>
+                        <p>Oui, afin de nous permettre d'effectuer le règlement de 10 € en espèces directement auprès de notre équipe.</p>
+                    </div>
+                    <div class="card">
+                        <h4>Intervenez-vous dans les villes voisines (Croix, Marcq, Mouvaux) ?</h4>
+                        <p>Non, ProxiHome est actuellement 100 % dédié aux habitants de Wasquehal (59290).</p>
+                    </div>
+                </div>
+            </div>
+
+        {% elif page == 'legal' %}
+            <div class="booking-card">
+                <h1>Mentions Légales & Politique de Confidentialité</h1>
+                <h3>1. Éditeur du site</h3>
+                <p>ProxiHome Wasquehal — Service local d'entretien extérieur (trottoirs), 59290 Wasquehal, France.</p>
+                <h3 id="confidentialite">2. Protection des données personnelles (RGPD)</h3>
+                <p>Les informations recueillies (nom, prénom, adresse à Wasquehal, téléphone, e-mail) sont strictement nécessaires à la gestion et au suivi de votre réservation. Elles ne sont jamais revendues à des tiers.</p>
+                <h3>3. Journaux de sécurité</h3>
+                <p>Conformément à nos obligations de sécurité informatique, les connexions à l'espace d'administration sont journalisées (adresse IP conservée pour une durée maximale de 30 jours à des fins exclusives de prévention des intrusions). Aucune adresse IP n'est collectée lors de la navigation publique.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

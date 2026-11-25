@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fiche Intervention {{ booking.reference }} — ProxiHome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-body">
+    <div class="container" style="padding: 2rem 1rem; max-width: 850px;">
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline btn-sm" style="margin-bottom: 1rem;">← Retour au tableau de bord</a>
+
+        <div class="booking-card">
+            <div class="tracking-header">
+                <div>
+                    <span class="badge-local">{{ booking.reference }}</span>
+                    <h2>{{ booking.first_name }} {{ booking.last_name }}</h2>
+                    <p>📍 {{ booking.address }}, 59290 Wasquehal</p>
+                    <p>📞 {{ booking.phone }} | ✉️ {{ booking.email }}</p>
+                </div>
+                <div>
+                    <strong>Tarif : 10,00 € TTC</strong><br>
+                    <small>Créée le {{ booking.created_at.strftime('%d/%m/%Y à %H:%M') }}</small>
+                </div>
+            </div>
+
+            <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid #e2e8f0;">
+
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action_type" value="update">
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Statut de l'intervention (synchronisé suivi client)</label>
+                        <select name="status">
+                            <option value="1" {{ 'selected' if booking.status == 1 else '' }}>1. Demande prise en compte</option>
+                            <option value="2" {{ 'selected' if booking.status == 2 else '' }}>2. Préparation de l'intervention</option>
+                            <option value="3" {{ 'selected' if booking.status == 3 else '' }}>3. Équipe en déplacement</option>
+                            <option value="4" {{ 'selected' if booking.status == 4 else '' }}>4. Intervention terminée</option>
+                            <option value="0" {{ 'selected' if booking.status == 0 else '' }}>0. Annuler l'intervention</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Encaissement espèces (10 €)</label>
+                        <label class="checkbox-label" style="margin-top: 0.5rem;">
+                            <input type="checkbox" name="payment_received" {{ 'checked' if booking.payment_received else '' }}>
+                            <span>Paiement de 10 € reçu en espèces</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Date prévue</label>
+                        <input type="date" name="booking_date" value="{{ booking.booking_date }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Heure prévue</label>
+                        <input type="text" name="booking_time" value="{{ booking.booking_time }}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Notes internes (équipe uniquement)</label>
+                    <textarea name="internal_notes" rows="3">{{ booking.internal_notes }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+            </form>
+
+            <form method="POST" onsubmit="return confirm('Confirmer la suppression définitive de cette commande ?');" style="margin-top: 2rem; text-align: right;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action_type" value="delete">
+                <button type="submit" class="btn btn-danger btn-sm">Supprimer définitivement la commande</button>
+            </form>
+        </div>
+
+        <div class="booking-card" style="margin-top: 1.5rem;">
+            <h3>Historique des modifications</h3>
+            <ul class="service-list">
+                {% for h in booking.history %}
+                <li><strong>{{ h.timestamp.strftime('%d/%m/%Y %H:%M') }}</strong> ({{ h.actor }}) : {{ h.action }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero reveal">
+    <div class="container hero-grid">
+        <div class="hero-content">
+            <span class="badge-local">📍 Exclusivité habitants de Wasquehal (59290)</span>
+            <h1>Bienvenue chez ProxiHome</h1>
+            <p class="hero-subtitle">Offrez à votre trottoir un extérieur propre et soigné.</p>
+            <p class="hero-desc">
+                Notre équipe intervient devant votre habitation pour retirer les mauvaises herbes présentes sur votre trottoir. Un service simple, rapide et accessible aux habitants de Wasquehal.
+            </p>
+
+            <div class="price-banner">
+                <div class="price-tag">10 € <span>TTC</span></div>
+                <div class="price-details">
+                    <strong>Déplacement compris</strong>
+                    <small>Paiement uniquement en espèces lors de l'intervention</small>
+                </div>
+            </div>
+
+            <div class="hero-actions">
+                <a href="{{ url_for('booking.booking_page') }}" class="btn btn-primary btn-lg pulse-btn sound-click" id="startBookingBtn">
+                    PLANIFIER MON INTERVENTION →
+                </a>
+                <a href="{{ url_for('main.tracking') }}" class="btn btn-outline sound-hover">
+                    Suivre ma demande
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="before-after-card">
+                <div class="ba-header">
+                    <span>Résultat garanti devant chez vous</span>
+                    <span class="ba-pill">Avant / Après</span>
+                </div>
+                <div class="ba-comparison">
+                    <div class="ba-box ba-before">
+                        <div class="ba-illustration">🌱🌿🌾</div>
+                        <strong>Avant</strong>
+                        <p>Mauvaises herbes entre les pavés et bordures de trottoir.</p>
+                    </div>
+                    <div class="ba-arrow">➔</div>
+                    <div class="ba-box ba-after">
+                        <div class="ba-illustration">✨🏡✨</div>
+                        <strong>Après ProxiHome</strong>
+                        <p>Trottoir net, propre et valorisant pour votre façade.</p>
+                    </div>
+                </div>
+                <div class="ba-footer">
+                    ✓ Désherbage manuel et soigné uniquement sur la partie trottoir devant votre habitation.
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-light reveal">
+    <div class="container">
+        <div class="section-header">
+            <h2>Un cadre clair, transparent et sans surprise</h2>
+            <p>Nous concentrons notre savoir-faire sur une prestation précise pour garantir un tarif unique de 10 €.</p>
+        </div>
+
+        <div class="cards-grid">
+            <div class="card">
+                <div class="card-icon">🌿</div>
+                <h3>Ce que nous faisons</h3>
+                <p>Nettoyage et retrait complet des mauvaises herbes poussant sur le trottoir situé devant votre habitation à Wasquehal.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">🚫</div>
+                <h3>Ce que nous ne faisons pas</h3>
+                <p>Nous ne proposons pas de jardinage général, ni de taille de haies, ni de tonte de pelouse dans les jardins privés.</p>
+            </div>
+            <div class="card">
+                <div class="card-icon">💶</div>
+                <h3>10 € en espèces sur place</h3>
+                <p>Aucun paiement en ligne ni carte bancaire requise. Vous réglez 10 € TTC en espèces directement à l'équipe lors de son passage.</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

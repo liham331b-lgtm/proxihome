@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Planifier mon intervention — ProxiHome Wasquehal{% endblock %}
+
+{% block content %}
+<section class="booking-section">
+    <div class="container">
+        <!-- Barre de progression -->
+        <div class="progress-wrapper">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill" style="width: 16%;"></div>
+            </div>
+            <div class="progress-steps">
+                <span class="step-label active" data-step="1">1. Zone</span>
+                <span class="step-label" data-step="2">2. Coordonnées</span>
+                <span class="step-label" data-step="3">3. Sécurité</span>
+                <span class="step-label" data-step="4">4. Créneau</span>
+                <span class="step-label" data-step="5">5. Résumé</span>
+                <span class="step-label" data-step="6">6. Confirmé</span>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 1 : MODALE VÉRIFICATION ZONE -->
+        <div class="modal-overlay active" id="zoneModal">
+            <div class="modal-card">
+                <a href="{{ url_for('main.index') }}" class="modal-close" title="Fermer">✕</a>
+                <div class="modal-icon">📍</div>
+                <h2>Avant de continuer, vérifions votre adresse !</h2>
+                <p>Notre service est actuellement réservé aux habitants de <strong>Wasquehal (59290)</strong>.</p>
+                <p class="question-highlight">Habitez-vous à Wasquehal ?</p>
+
+                <div class="modal-actions" id="zoneChoices">
+                    <button type="button" class="btn btn-primary btn-lg sound-click" id="btnYesWasquehal">
+                        OUI, JE SUIS À WASQUEHAL
+                    </button>
+                    <button type="button" class="btn btn-outline sound-click" id="btnNoWasquehal">
+                        NON
+                    </button>
+                </div>
+
+                <div class="zone-error hidden" id="zoneErrorMsg">
+                    <p>⚠️ <strong>Intervention impossible :</strong> ProxiHome intervient exclusivement devant les habitations situées sur la commune de Wasquehal (59290).</p>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-outline btn-sm">Retourner à l'accueil</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 2 : INFORMATIONS PERSONNELLES -->
+        <div class="booking-card hidden" id="step2">
+            <h2>Vos informations personnelles</h2>
+            <p class="step-desc">Indiquez l'adresse exacte du trottoir à nettoyer à Wasquehal.</p>
+
+            <form id="personalForm" novalidate>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nom *</label>
+                        <input type="text" id="lastName" required placeholder="Ex : Dupont">
+                    </div>
+                    <div class="form-group">
+                        <label>Prénom *</label>
+                        <input type="text" id="firstName" required placeholder="Ex : Camille">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Adresse complète (Numéro et rue) *</label>
+                    <input type="text" id="address" required placeholder="Ex : 24 Rue du Molinel">
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Code postal (Wasquehal uniquement) *</label>
+                        <input type="text" id="postalCode" value="59290" maxlength="5" required>
+                        <small class="error-text hidden" id="cpError">Le code postal doit être 59290 (Wasquehal).</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Ville</label>
+                        <input type="text" value="Wasquehal" readonly class="readonly-input">
+                    </div>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Adresse e-mail *</label>
+                        <input type="email" id="email" required placeholder="camille.dupont@email.fr">
+                    </div>
+                    <div class="form-group">
+                        <label>Numéro de téléphone *</label>
+                        <input type="tel" id="phone" required placeholder="06 12 34 56 78">
+                    </div>
+                </div>
+
+                <p class="error-banner hidden" id="step2Error">Veuillez remplir correctement tous les champs obligatoires.</p>
+
+                <div class="step-nav">
+                    <button type="button" class="btn btn-primary sound-click" id="toStep3Btn">Continuer →</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ÉTAPE 3 : VÉRIFICATION ANTI-ROBOT SIMULÉE -->
+        <div class="booking-card hidden" id="step3">
+            <h2>Vérification anti-robot</h2>
+            <p class="step-desc">Recopiez le code à 4 chiffres affiché ci-dessous pour passer au choix du créneau.</p>
+
+            <div class="captcha-container" style="text-align: center; margin: 1.5rem 0;">
+                <div id="fakeCaptchaCode" style="display: inline-block; padding: 0.75rem 1.6rem; font-size: 1.7rem; font-weight: 800; letter-spacing: 6px; background: var(--beige); border-radius: 10px; color: var(--forest); user-select: none;">
+                    {{ captcha_code }}
+                </div>
+                <div style="max-width: 240px; margin: 1rem auto;">
+                    <input type="text" id="fakeCaptchaInput" maxlength="4" placeholder="Code à 4 chiffres" style="text-align: center; font-size: 1.1rem;">
+                </div>
+                <button type="button" class="btn btn-primary sound-click" id="validateFakeCaptchaBtn">
+                    Valider le code
+                </button>
+                <p class="error-banner hidden" id="captchaError" style="margin-top: 1rem;"></p>
+            </div>
+
+            <div class="loader-box hidden" id="captchaLoader">
+                <div class="spinner"></div>
+                <p>Vérification sécurisée en cours...</p>
+            </div>
+
+            <div class="step-nav">
+                <button type="button" class="btn btn-outline sound-click" onclick="goToStep(2)">← Retour</button>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 4 : CHOIX DATE ET HEURE -->
+        <div class="booking-card hidden" id="step4">
+            <h2>Choisissez la date et l'heure d'intervention</h2>
+            <p class="step-desc">Sélectionnez un jour puis faites défiler les créneaux disponibles.</p>
+
+            <div class="date-picker-box">
+                <label for="bookingDate">Date souhaitée :</label>
+                <input type="date" id="bookingDate" class="date-input">
+                <span id="dayNameDisplay" class="day-badge"></span>
+            </div>
+
+            <div id="slotsWrapper" class="slots-wrapper">
+                <p class="muted-text">Sélectionnez une date pour voir les horaires disponibles.</p>
+            </div>
+
+            <div class="selected-slot-banner hidden" id="selectedSlotBanner">
+                Créneau sélectionné : <strong id="selectedSlotText"></strong>
+            </div>
+
+            <div class="step-nav">
+                <button type="button" class="btn btn-outline sound-click" onclick="goToStep(3)">← Retour</button>
+                <button type="button" class="btn btn-primary sound-click" id="toStep5Btn" disabled>Voir le récapitulatif →</button>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 5 : RÉCAPITULATIF -->
+        <div class="booking-card hidden" id="step5">
+            <h2>Récapitulatif de votre demande</h2>
+            <div class="summary-grid">
+                <div class="summary-box">
+                    <h4>Vos coordonnées</h4>
+                    <p><strong>Client :</strong> <span id="sumName"></span></p>
+                    <p><strong>Adresse :</strong> <span id="sumAddress"></span>, 59290 Wasquehal</p>
+                    <p><strong>E-mail :</strong> <span id="sumEmail"></span></p>
+                    <p><strong>Téléphone :</strong> <span id="sumPhone"></span></p>
+                </div>
+                <div class="summary-box">
+                    <h4>Intervention prévue</h4>
+                    <p><strong>Prestation :</strong> Nettoyage mauvaises herbes (trottoir)</p>
+                    <p><strong>Date :</strong> <span id="sumDate"></span></p>
+                    <p><strong>Heure :</strong> <span id="sumTime"></span></p>
+                </div>
+            </div>
+
+            <div class="finance-box">
+                <div class="finance-row"><span>Prestation de désherbage trottoir</span><span>10,00 €</span></div>
+                <div class="finance-row"><span>Frais de déplacement (Wasquehal)</span><span class="badge-free">INCLUS</span></div>
+                <div class="finance-total"><span>Total à régler</span><span>10,00 € TTC</span></div>
+                <p class="cash-notice">
+                    💶 Le règlement de 10 € s'effectue exclusivement en espèces, directement auprès de notre équipe lors de son passage à votre domicile. Aucun paiement en ligne n'est effectué.
+                </p>
+            </div>
+
+            <label class="checkbox-label">
+                <input type="checkbox" id="acceptTerms">
+                <span>J'accepte le tarif de 10 €, déplacement compris, et je confirme que le règlement sera effectué en espèces lors de l'intervention.</span>
+            </label>
+
+            <p class="error-banner hidden" id="step5Error"></p>
+
+            <div class="step-nav">
+                <button type="button" class="btn btn-outline sound-click" onclick="goToStep(4)">← Modifier le créneau</button>
+                <button type="button" class="btn btn-primary btn-lg sound-click" id="confirmBookingBtn">CONFIRMER MA DEMANDE</button>
+            </div>
+        </div>
+
+        <!-- ÉTAPE 6 : CONFIRMATION -->
+        <div class="booking-card text-center hidden" id="step6">
+            <div class="success-checkmark">✓</div>
+            <h2>Merci pour votre confiance !</h2>
+            <p class="lead">Votre demande a bien été transmise à notre équipe ProxiHome.</p>
+
+            <div class="confirmation-ticket">
+                <p>Numéro de réservation unique :</p>
+                <div class="ref-code" id="finalRef">PX-XXXXXX</div>
+                <p>Intervention prévue le <strong id="finalDate"></strong> à <strong id="finalTime"></strong></p>
+                <small>Conservez ce numéro pour suivre l'avancée de notre équipe en temps réel.</small>
+            </div>
+
+            <div class="hero-actions justify-center">
+                <a href="#" id="trackNowLink" class="btn btn-primary sound-click">Suivre mon intervention</a>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline">Retour à l'accueil</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const CSRF_TOKEN = "{{ csrf_token() }}";
+</script>
+{% endblock %}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Admin — ProxiHome</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="admin-body">
+    <header class="navbar">
+        <div class="container nav-container">
+            <strong>🌿 ProxiHome — Administration</strong>
+            <div>
+                <a href="{{ url_for('main.index') }}" target="_blank" class="btn btn-outline btn-sm">Voir le site</a>
+                <a href="{{ url_for('admin.logout') }}" class="btn btn-primary btn-sm">Déconnexion</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding: 2rem 1rem;">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for cat, msg in messages %}
+                <div class="flash flash-{{ cat }}">{{ msg }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- KPIs -->
+        <div class="stats-grid">
+            <div class="stat-card"><span>Total réservations</span><strong>{{ stats.total }}</strong></div>
+            <div class="stat-card"><span>Aujourd'hui</span><strong>{{ stats.today }}</strong></div>
+            <div class="stat-card"><span>Prises en compte</span><strong>{{ stats.pending }}</strong></div>
+            <div class="stat-card"><span>En préparation</span><strong>{{ stats.preparing }}</strong></div>
+            <div class="stat-card"><span>En déplacement</span><strong>{{ stats.moving }}</strong></div>
+            <div class="stat-card"><span>Terminées</span><strong>{{ stats.completed }}</strong></div>
+            <div class="stat-card highlight"><span>CA Encaissé (Espèces)</span><strong>{{ "%.2f"|format(stats.revenue) }} €</strong></div>
+        </div>
+
+        <!-- GESTION DES COMMANDES -->
+        <div class="booking-card" style="margin-top: 2rem; overflow-x: auto;">
+            <h2>Gestion des interventions</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Réf.</th>
+                        <th>Client</th>
+                        <th>Adresse (59290)</th>
+                        <th>Téléphone / E-mail</th>
+                        <th>Date & Heure</th>
+                        <th>Statut</th>
+                        <th>Paiement</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for b in bookings %}
+                    <tr>
+                        <td><strong>{{ b.reference }}</strong></td>
+                        <td>{{ b.first_name }} {{ b.last_name }}</td>
+                        <td>{{ b.address }}</td>
+                        <td>{{ b.phone }}<br><small>{{ b.email }}</small></td>
+                        <td>{{ b.booking_date }} à {{ b.booking_time }}</td>
+                        <td><span class="status-pill status-{{ b.status }}">{{ b.status_label }}</span></td>
+                        <td>{{ '✅ 10 € Reçu' if b.payment_received else '⏳ Espèces sur place' }}</td>
+                        <td>
+                            <a href="{{ url_for('admin.order_detail', booking_id=b.id) }}" class="btn btn-primary btn-sm">Gérer</a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="8" class="text-center">Aucune réservation enregistrée pour le moment.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- GESTION DES DISPONIBILITÉS -->
+        <div class="booking-card" style="margin-top: 2rem;">
+            <h2>Configuration des disponibilités</h2>
+            <form method="POST" action="{{ url_for('admin.update_availability') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label>Jours de travail actifs :</label>
+                    <div class="days-checkboxes">
+                        {% set active_days = config.working_days.split(',') %}
+                        {% for idx, name in [('0','Lundi'),('1','Mardi'),('2','Mercredi'),('3','Jeudi'),('4','Vendredi'),('5','Samedi'),('6','Dimanche')] %}
+                        <label><input type="checkbox" name="working_days" value="{{ idx }}" {{ 'checked' if idx in active_days else '' }}> {{ name }}</label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Créneaux horaires (séparés par virgule)</label>
+                        <input type="text" name="time_slots" value="{{ config.time_slots }}">
+                    </div>
+                    <div class="form-group">
+                        <label>Interventions max par créneau</label>
+                        <input type="number" name="max_per_slot" min="1" max="10" value="{{ config.max_per_slot }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Journées bloquées / fermées (YYYY-MM-DD séparées par virgule)</label>
+                    <input type="text" name="blocked_dates" value="{{ config.blocked_dates }}" placeholder="2026-12-25,2026-01-01">
+                </div>
+                <button type="submit" class="btn btn-primary">Enregistrer les disponibilités</button>
+            </form>
+        </div>
+
+        <!-- JOURNAUX DE SÉCURITÉ -->
+        <div class="booking-card" style="margin-top: 2rem; overflow-x: auto;">
+            <h2>Journaux de sécurité et d'activité</h2>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Date / Heure (UTC)</th>
+                        <th>Type</th>
+                        <th>Acteur</th>
+                        <th>Détails</th>
+                        <th>IP (Admin uniquement)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td><code>{{ log.event_type }}</code></td>
+                        <td>{{ log.actor }}</td>
+                        <td>{{ log.details }}</td>
+                        <td>{{ log.ip_address or '-' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

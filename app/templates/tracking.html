@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Suivre mon intervention — ProxiHome{% endblock %}
+
+{% block content %}
+<section class="section-light">
+    <div class="container container-sm">
+        <div class="section-header">
+            <h1>Suivre mon intervention</h1>
+            <p>Consultez en direct l'avancement de notre équipe pour votre trottoir à Wasquehal.</p>
+        </div>
+
+        <div class="booking-card">
+            <form method="POST" action="{{ url_for('main.tracking') }}" class="tracking-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Numéro de réservation *</label>
+                        <input type="text" name="reference" value="{{ prefill_ref }}" placeholder="Ex : PX-A8F92K" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Adresse e-mail utilisée *</label>
+                        <input type="email" name="email" placeholder="votre@email.fr" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block sound-click">Rechercher mon intervention</button>
+            </form>
+
+            {% if error %}
+                <div class="error-banner" style="margin-top: 1.5rem;">{{ error }}</div>
+            {% endif %}
+        </div>
+
+        {% if booking %}
+        <div class="booking-card tracking-result" style="margin-top: 2rem;">
+            <div class="tracking-header">
+                <div>
+                    <span class="badge-local">Réservation {{ booking.reference }}</span>
+                    <h3>{{ booking.first_name }} {{ booking.last_name }}</h3>
+                    <p>{{ booking.address }}, 59290 Wasquehal</p>
+                </div>
+                <div class="tracking-date-box">
+                    <strong>{{ booking.booking_date }}</strong>
+                    <span>Créneau : {{ booking.booking_time }}</span>
+                </div>
+            </div>
+
+            {% if booking.status == 0 %}
+                <div class="error-banner">Cette intervention a été annulée. Contactez-nous pour plus d'informations.</div>
+            {% else %}
+            <div class="timeline">
+                <!-- Étape 1 -->
+                <div class="timeline-item {{ 'completed' if booking.status >= 1 else '' }}">
+                    <div class="timeline-dot">1</div>
+                    <div class="timeline-content">
+                        <h4>DEMANDE PRISE EN COMPTE</h4>
+                        <p>Votre réservation est confirmée et enregistrée dans notre planning Wasquehal.</p>
+                        <small>{{ booking.step1_at.strftime('%d/%m/%Y à %H:%M') if booking.step1_at else '' }}</small>
+                    </div>
+                </div>
+
+                <!-- Étape 2 -->
+                <div class="timeline-item {{ 'completed' if booking.status >= 2 else '' }}">
+                    <div class="timeline-dot">2</div>
+                    <div class="timeline-content">
+                        <h4>PRÉPARATION DE L'INTERVENTION</h4>
+                        <p>Notre équipe prépare le matériel de désherbage pour votre secteur.</p>
+                        <small>{{ booking.step2_at.strftime('%d/%m/%Y à %H:%M') if booking.step2_at else 'En attente' }}</small>
+                    </div>
+                </div>
+
+                <!-- Étape 3 -->
+                <div class="timeline-item {{ 'completed' if booking.status >= 3 else '' }}">
+                    <div class="timeline-dot">3</div>
+                    <div class="timeline-content">
+                        <h4>ÉQUIPE EN DÉPLACEMENT</h4>
+                        <p>Nos intervenants sont en route vers votre habitation à Wasquehal. Préparez 10 € en espèces.</p>
+                        <small>{{ booking.step3_at.strftime('%d/%m/%Y à %H:%M') if booking.step3_at else 'En attente' }}</small>
+                    </div>
+                </div>
+
+                <!-- Étape 4 -->
+                <div class="timeline-item {{ 'completed' if booking.status >= 4 else '' }}">
+                    <div class="timeline-dot">4</div>
+                    <div class="timeline-content">
+                        <h4>INTERVENTION TERMINÉE</h4>
+                        <p>Votre trottoir est propre et désherbé ! Merci pour votre confiance.</p>
+                        <small>{{ booking.step4_at.strftime('%d/%m/%Y à %H:%M') if booking.step4_at else 'En attente' }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

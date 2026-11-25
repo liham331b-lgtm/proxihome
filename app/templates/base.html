@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ProxiHome — Votre extérieur, notre attention (Wasquehal){% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="{{ url_for('main.index') }}" class="logo sound-click">
+                <span class="logo-icon">🌿</span>
+                <div class="logo-text">
+                    <strong>ProxiHome</strong>
+                    <small>Wasquehal 59290</small>
+                </div>
+            </a>
+
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">☰</button>
+
+            <nav class="nav-links" id="navLinks">
+                <a href="{{ url_for('main.index') }}" class="sound-hover">Accueil</a>
+                <a href="{{ url_for('main.informations') }}" class="sound-hover">Informations</a>
+                <a href="{{ url_for('main.services') }}" class="sound-hover">Nos services</a>
+                <a href="{{ url_for('main.tracking') }}" class="sound-hover">Suivre mon intervention</a>
+                <a href="{{ url_for('main.contact') }}" class="sound-hover">Contact</a>
+                <a href="{{ url_for('booking.booking_page') }}" class="btn btn-primary btn-sm sound-click">Faire une demande</a>
+            </nav>
+
+            <button id="soundToggle" class="sound-toggle" title="Activer/Désactiver les effets sonores" aria-label="Son">
+                🔊
+            </button>
+        </div>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container flash-container">
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-grid">
+            <div>
+                <div class="logo-footer">🌿 <strong>ProxiHome</strong></div>
+                <p>Votre extérieur, notre attention.<br>Service local dédié au désherbage des trottoirs devant les habitations à <strong>Wasquehal (59290)</strong>.</p>
+            </div>
+            <div>
+                <h4>Navigation</h4>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Accueil</a></li>
+                    <li><a href="{{ url_for('main.services') }}">Nos services</a></li>
+                    <li><a href="{{ url_for('main.informations') }}">Informations & Tarifs</a></li>
+                    <li><a href="{{ url_for('main.tracking') }}">Suivre mon intervention</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>Informations légales</h4>
+                <ul>
+                    <li><a href="{{ url_for('main.legal') }}">Mentions légales</a></li>
+                    <li><a href="{{ url_for('main.legal') }}#confidentialite">Politique de confidentialité</a></li>
+                    <li><a href="{{ url_for('main.contact') }}">Nous contacter</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 ProxiHome Wasquehal — Tarif unique 10 € TTC (espèces sur place). Tous droits réservés.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/audio.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
