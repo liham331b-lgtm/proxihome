@@ -1,40 +1,45 @@
 {% extends "base.html" %}
-{% block title %}Suivre mon intervention — ProxiHome{% endblock %}
+{% block title %}Suivi de l'arrivée — ProxiHome{% endblock %}
 
 {% block content %}
 <section class="section-light">
     <div class="container container-sm">
         <div class="section-header">
-            <h1>Suivre mon intervention</h1>
-            <p>Consultez en direct l'avancement de notre équipe pour votre trottoir à Wasquehal.</p>
+            <h1>Suivi de l'arrivée</h1>
+            <p>Suivez l'avancement et l'arrivée de notre équipe à Wasquehal en direct.</p>
         </div>
 
-        <div class="booking-card">
-            <form method="POST" action="{{ url_for('main.tracking') }}" class="tracking-form">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Numéro de réservation *</label>
-                        <input type="text" name="reference" value="{{ prefill_ref }}" placeholder="Ex : PX-A8F92K" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Adresse e-mail utilisée *</label>
-                        <input type="email" name="email" placeholder="votre@email.fr" required>
-                    </div>
+        {% if not booking and not prefill_ref %}
+        <div class="booking-card" id="autoLoadingBox">
+            <p id="statusHint">Chargement de votre intervention en cours...</p>
+            <form method="GET" action="{{ url_for('main.tracking') }}" id="quickRefForm" class="tracking-form" style="display: none; margin-top: 1rem;">
+                <div class="form-group">
+                    <label for="trackRefInput">Numéro de réservation (si différent)</label>
+                    <input type="text" name="ref" id="trackRefInput" placeholder="Ex : PX-A8F92K">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block sound-click">Rechercher mon intervention</button>
+                <button type="submit" class="btn btn-primary btn-block sound-click">Afficher le suivi</button>
             </form>
-
-            {% if error %}
-                <div class="error-banner" style="margin-top: 1.5rem;">{{ error }}</div>
-            {% endif %}
         </div>
+        {% endif %}
+
+        {% if error %}
+        <div class="booking-card">
+            <div class="error-banner">{{ error }}</div>
+            <form method="GET" action="{{ url_for('main.tracking') }}" class="tracking-form" style="margin-top: 1.25rem;">
+                <div class="form-group">
+                    <label for="retryRefInput">Numéro de réservation</label>
+                    <input type="text" name="ref" id="retryRefInput" value="{{ prefill_ref }}" placeholder="Ex : PX-A8F92K" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block sound-click">Afficher le suivi</button>
+            </form>
+        </div>
+        {% endif %}
 
         {% if booking %}
-        <div class="booking-card tracking-result" style="margin-top: 2rem;">
+        <div class="booking-card tracking-result">
             <div class="tracking-header">
                 <div>
-                    <span class="badge-local">Réservation {{ booking.reference }}</span>
+                    <span class="badge-local">Commande {{ booking.reference }}</span>
                     <h3>{{ booking.first_name }} {{ booking.last_name }}</h3>
                     <p>{{ booking.address }}, 59290 Wasquehal</p>
                 </div>
@@ -45,10 +50,9 @@
             </div>
 
             {% if booking.status == 0 %}
-                <div class="error-banner">Cette intervention a été annulée. Contactez-nous pour plus d'informations.</div>
+                <div class="error-banner" style="margin-top: 1.5rem;">Cette intervention a été annulée. Contactez-nous pour plus d'informations.</div>
             {% else %}
             <div class="timeline">
-                <!-- Étape 1 -->
                 <div class="timeline-item {{ 'completed' if booking.status >= 1 else '' }}">
                     <div class="timeline-dot">1</div>
                     <div class="timeline-content">
@@ -58,7 +62,6 @@
                     </div>
                 </div>
 
-                <!-- Étape 2 -->
                 <div class="timeline-item {{ 'completed' if booking.status >= 2 else '' }}">
                     <div class="timeline-dot">2</div>
                     <div class="timeline-content">
@@ -68,17 +71,15 @@
                     </div>
                 </div>
 
-                <!-- Étape 3 -->
                 <div class="timeline-item {{ 'completed' if booking.status >= 3 else '' }}">
                     <div class="timeline-dot">3</div>
                     <div class="timeline-content">
-                        <h4>ÉQUIPE EN DÉPLACEMENT</h4>
+                        <h4>ÉQUIPE EN DÉPLACEMENT / ARRIVÉE</h4>
                         <p>Nos intervenants sont en route vers votre habitation à Wasquehal. Préparez 10 € en espèces.</p>
                         <small>{{ booking.step3_at.strftime('%d/%m/%Y à %H:%M') if booking.step3_at else 'En attente' }}</small>
                     </div>
                 </div>
 
-                <!-- Étape 4 -->
                 <div class="timeline-item {{ 'completed' if booking.status >= 4 else '' }}">
                     <div class="timeline-dot">4</div>
                     <div class="timeline-content">
@@ -89,8 +90,46 @@
                 </div>
             </div>
             {% endif %}
+
+            <div style="margin-top: 2rem; text-align: right;">
+                <a href="{{ url_for('main.tracking', reset='1') }}" class="btn btn-outline btn-sm">Consulter une autre commande</a>
+            </div>
         </div>
         {% endif %}
     </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const STORAGE_KEY = 'proxihome_last_ref';
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('reset') === '1') {
+            localStorage.removeItem(STORAGE_KEY);
+            const hint = document.getElementById('statusHint');
+            const form = document.getElementById('quickRefForm');
+            if (hint) hint.textContent = 'Aucune commande mémorisée sur cet appareil.';
+            if (form) form.style.display = 'block';
+            return;
+        }
+
+        const serverRef = "{{ booking.reference if booking else '' }}";
+        if (serverRef) {
+            localStorage.setItem(STORAGE_KEY, serverRef);
+            return;
+        }
+
+        const savedRef = localStorage.getItem(STORAGE_KEY);
+        if (savedRef && !params.get('ref')) {
+            window.location.replace(`/suivi?ref=${encodeURIComponent(savedRef)}`);
+        } else {
+            const hint = document.getElementById('statusHint');
+            const form = document.getElementById('quickRefForm');
+            if (hint) hint.textContent = 'Entrez votre numéro de réservation si vous avez commandé depuis un autre appareil :';
+            if (form) form.style.display = 'block';
+        }
+    })();
+</script>
 {% endblock %}

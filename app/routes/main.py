@@ -4,21 +4,26 @@ from app.models import Booking, ContactMessage
 
 main_bp = Blueprint('main', __name__)
 
+
 @main_bp.route('/')
 def index():
     return render_template('index.html')
+
 
 @main_bp.route('/informations')
 def informations():
     return render_template('pages.html', page='informations')
 
+
 @main_bp.route('/services')
 def services():
     return render_template('pages.html', page='services')
 
+
 @main_bp.route('/mentions-legales')
 def legal():
     return render_template('pages.html', page='legal')
+
 
 @main_bp.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -39,19 +44,16 @@ def contact():
 
     return render_template('pages.html', page='contact', contact_email=current_app.config['CONTACT_EMAIL'])
 
+
 @main_bp.route('/suivi', methods=['GET', 'POST'])
 def tracking():
     booking = None
     error = None
-    ref = request.args.get('ref', '').strip().upper()
+    ref = (request.form.get('reference') or request.args.get('ref') or '').strip().upper()
 
-    if request.method == 'POST':
-        ref = request.form.get('reference', '').strip().upper()
-        email = request.form.get('email', '').strip().lower()
+    if ref:
         booking = Booking.query.filter_by(reference=ref).first()
-
-        if not booking or booking.email.lower() != email:
-            error = "Aucune intervention trouvée avec cette référence et cette adresse e-mail."
-            booking = None
+        if not booking:
+            error = "Aucune intervention trouvée pour ce numéro de réservation."
 
     return render_template('tracking.html', booking=booking, error=error, prefill_ref=ref)
